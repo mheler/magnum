@@ -484,6 +484,8 @@ the table are linked to more details elsewhere in the user guide.
 +---------------------------------------+--------------------+---------------+
 | `octavia_lb_healthcheck`_             | see bellow         | true          |
 +---------------------------------------+--------------------+---------------+
+| `az_list_for_multi_masters`_          | see below          | see below     |
++---------------------------------------+--------------------+---------------+
 
 .. _cluster:
 
@@ -1618,6 +1620,15 @@ _`octavia_lb_algorithm`
 _`octavia_lb_healthcheck`
   If true, enable Octavia load balancer healthcheck
   Default: true
+
+_`az_list_for_multi_masters`
+  List of availability zone to be distribute number of master nodes across
+  those availability zones. By defualt, it's an empty list. And Magnum will
+  use the AZ specified by label `availability_zone` to deploy. If the number
+  of the AZ list less than the targeted master node count, master nodes will be
+  deployed on those AZ repeatly. For example, if the passed-in list is
+  az1, az2, az3 and the cluster will create 5 master nodes, then the 5 master
+  nodes will be deployed like this: az1, az2, az3, az1, az2.
 
 Supported versions
 ------------------

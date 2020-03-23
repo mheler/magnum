@@ -153,6 +153,7 @@ class K8sFedoraTemplateDefinition(k8s_template_def.K8sTemplateDefinition):
         self._set_cert_manager_params(context, cluster, extra_params)
         self._get_keystone_auth_default_policy(extra_params)
         self._set_volumes(context, cluster, extra_params)
+        self._set_az_list_for_multi_masters(context, cluster, extra_params)
 
         return super(K8sFedoraTemplateDefinition,
                      self).get_params(context, cluster_template, cluster,
@@ -233,6 +234,22 @@ class K8sFedoraTemplateDefinition(k8s_template_def.K8sTemplateDefinition):
             cinder.get_default_boot_volume_type(context))
             if int(boot_volume_size) > 0 else '')
         extra_params['boot_volume_type'] = boot_volume_type
+
+    def _set_az_list_for_multi_masters(self, context, cluster, extra_params):
+        master_count = cluster.master_count or 1
+        az_label = cluster.labels.get("az_list_for_multi_masters", [])
+        if type(az_label) is str:
+            az_list = az_label.split(",")
+        else:
+            az_list = []
+        az = cluster.labels.get("availability_zone", "")
+        if az_list:
+            az_count = len(az_list)
+            if az_count > 0 and az_count < master_count:
+                az_list = [az_list[i % az_count] for i in range(master_count)]
+        else:
+            az_list = [az for i in range(master_count)]
+        extra_params["az_list_for_multi_masters"] = az_list
 
     def get_env_files(self, cluster_template, cluster, nodegroup=None):
         env_files = []

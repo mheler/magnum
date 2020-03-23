@@ -382,6 +382,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             'octavia_provider': None,
             'octavia_lb_algorithm': None,
             'octavia_lb_healthcheck': None,
+            'az_list_for_multi_masters': az_1,
         }
 
         if missing_attr is not None:
@@ -540,6 +541,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             'octavia_provider': None,
             'octavia_lb_algorithm': None,
             'octavia_lb_healthcheck': None,
+            'az_list_for_multi_masters': az_1,
         }
 
         self.assertEqual(expected, definition)
@@ -681,6 +683,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             'octavia_provider': None,
             'octavia_lb_algorithm': None,
             'octavia_lb_healthcheck': None,
+            'az_list_for_multi_masters': az_1,
         }
         self.assertEqual(expected, definition)
         self.assertEqual(
@@ -1171,6 +1174,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             'octavia_provider': None,
             'octavia_lb_algorithm': None,
             'octavia_lb_healthcheck': None,
+            'az_list_for_multi_masters': az_1,
         }
         self.assertEqual(expected, definition)
         self.assertEqual(
