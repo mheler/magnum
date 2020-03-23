@@ -708,6 +708,19 @@ parameters:
     description: >
       Tag of metrics-scraper for kubernetes dashboard.
 
+  az_list_for_multi_masters:
+    type: comma_delimited_list
+    description: >
+      List of AZ to be spread number of master nodes across availability zones
+      in heat.
+    default: []
+
+  node_index:
+    type: number
+    description: >
+      Index of the master node used for mapping a node to each availability
+      zone.
+
 conditions:
 
   image_based: {equals: [{get_param: boot_volume_size}, 0]}
@@ -961,7 +974,7 @@ resources:
       image: {get_param: server_image}
       size: {get_param: boot_volume_size}
       volume_type: {get_param: boot_volume_type}
-      availability_zone: {get_param: availability_zone}
+      availability_zone: {get_param: [az_list_for_multi_masters, {get_param: node_index}]}
 
   # do NOT use "_" (underscore) in the Nova server name
   # it creates a mismatch between the generated Nova name and its hostname
@@ -979,7 +992,7 @@ resources:
       networks:
         - port: {get_resource: kube_master_eth0}
       scheduler_hints: { group: { get_param: nodes_server_group_id }}
-      availability_zone: {get_param: availability_zone}
+      availability_zone: {get_param: [az_list_for_multi_masters, {get_param: node_index}]}
 
   kube-master-bfv:
     type: OS::Nova::Server
@@ -993,7 +1006,7 @@ resources:
       networks:
         - port: {get_resource: kube_master_eth0}
       scheduler_hints: { group: { get_param: nodes_server_group_id }}
-      availability_zone: {get_param: availability_zone}
+      availability_zone: {get_param: [az_list_for_multi_masters, {get_param: node_index}]}
       block_device_mapping_v2:
         - boot_index: 0
           volume_id: {get_resource: kube_node_volume}
@@ -1044,7 +1057,7 @@ resources:
     properties:
       size: {get_param: etcd_volume_size}
       volume_type: {get_param: etcd_volume_type}
-      availability_zone: {get_param: availability_zone}
+      availability_zone: {get_param: [az_list_for_multi_masters, {get_param: node_index}]}
 
   etcd_volume_attach:
     type: Magnum::Optional::Etcd::VolumeAttachment
@@ -1064,7 +1077,7 @@ resources:
     properties:
       size: {get_param: docker_volume_size}
       volume_type: {get_param: docker_volume_type}
-      availability_zone: {get_param: availability_zone}
+      availability_zone: {get_param: [az_list_for_multi_masters, {get_param: node_index}]}
 
   docker_volume_attach:
     type: Magnum::Optional::Cinder::VolumeAttachment

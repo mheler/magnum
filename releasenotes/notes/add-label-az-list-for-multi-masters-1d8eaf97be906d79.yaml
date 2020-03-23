@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    A new label `az_list_for_multi_masters` is added to allow passing
+    in a list of availability zone to distribute multi master nodes
+    to different AZ to get a higher availability.

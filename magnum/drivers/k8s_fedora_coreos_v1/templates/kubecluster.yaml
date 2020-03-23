@@ -1001,6 +1001,13 @@ parameters:
     description: The allowed CIDR list for master load balancer
     default: []
 
+  az_list_for_multi_masters:
+    type: comma_delimited_list
+    description: >
+      List of AZ to be spread number of master nodes across availability zones
+      in heat.
+    default: []
+
 resources:
 
   ######################################################################
@@ -1317,6 +1324,8 @@ resources:
           openstack_ca: {get_param: openstack_ca}
           nodes_server_group_id: {get_resource: master_nodes_server_group}
           availability_zone: {get_param: availability_zone}
+          az_list_for_multi_masters: { get_param: az_list_for_multi_masters }
+          node_index: '%index%'
           ca_key: {get_param: ca_key}
           cert_manager_api: {get_param: cert_manager_api}
           calico_tag: {get_param: calico_tag}
