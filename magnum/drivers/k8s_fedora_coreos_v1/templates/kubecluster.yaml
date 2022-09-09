@@ -818,14 +818,14 @@ parameters:
   helm_client_sha256:
     type: string
     description: sha256 of helm client tarball
-    default: "018f9908cb950701a5d59e757653a790c66d8eda288625dbb185354ca6f41f6b"
+    default: "31960ff2f76a7379d9bac526ddf889fb79241191f1dbe2a24f7864ddcb3f6560"
 
   helm_client_tag:
     type: string
     description: >
       release tag of helm client
       https://github.com/helm/helm/releases
-    default: "v3.2.1"
+    default: "v3.9.4"
 
   auto_healing_enabled:
     type: boolean
