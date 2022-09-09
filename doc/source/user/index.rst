@@ -1478,6 +1478,7 @@ _`helm_client_url`
 _`helm_client_sha256`
   SHA256 checksum of the helm client binary.
   Ussuri default: 018f9908cb950701a5d59e757653a790c66d8eda288625dbb185354ca6f41f6b
+  Yoga default: 31960ff2f76a7379d9bac526ddf889fb79241191f1dbe2a24f7864ddcb3f6560
 
 _`helm_client_tag`
   This label allows users to override the default container tag for Helm
@@ -1485,6 +1486,7 @@ _`helm_client_tag`
   <https://github.com/helm/helm/tags>`_. You must use identical tiller_tag if
   you wish to use Tiller (for helm_client_tag<v3.0.0).
   Ussuri default: v3.2.1
+  Yoga default: v3.9.4
 
 _`master_lb_floating_ip_enabled`
   Controls if Magnum allocates floating IP for the load balancer of master
