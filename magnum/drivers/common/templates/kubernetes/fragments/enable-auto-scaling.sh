@@ -113,6 +113,7 @@ spec:
       labels:
         app: cluster-autoscaler
     spec:
+      hostNetwork: true
       nodeSelector:
         node-role.kubernetes.io/master: ""
       securityContext:
