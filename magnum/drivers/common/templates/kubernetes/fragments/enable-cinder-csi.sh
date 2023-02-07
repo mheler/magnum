@@ -123,9 +123,9 @@ rules:
   # Enable it if your driver needs secret.
   # For example, `csi.storage.k8s.io/snapshotter-secret-name` is set in VolumeSnapshotClass.
   # See https://kubernetes-csi.github.io/docs/secrets-and-credentials.html for more details.
-  #  - apiGroups: [""]
-  #    resources: ["secrets"]
-  #    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotclasses"]
     verbs: ["get", "list", "watch"]
@@ -161,9 +161,9 @@ metadata:
 rules:
   # The following rule should be uncommented for plugins that require secrets
   # for provisioning.
-  # - apiGroups: [""]
-  #   resources: ["secrets"]
-  #   verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "patch"]
@@ -550,6 +550,21 @@ stringData:
     trust-id=$TRUST_ID
     region=$REGION_NAME
     ca-file=/etc/kubernetes/ca-bundle.crt
+EOF
+    cat <<EOF | kubectl apply -f -
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: csi-cinder
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: cinder.csi.openstack.org
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  type: ${CINDER_CSI_VOLUME_TYPE}
 EOF
 
     kubectl apply -f ${CINDER_CSI_DEPLOY}
