@@ -29,13 +29,9 @@ if [ "${CONTAINER_RUNTIME}" = "containerd"  ] ; then
         exit 1
     fi
     $ssh_cmd tar xzvf /srv/magnum/cri-containerd.tar.gz -C / --no-same-owner --touch --no-same-permissions
-
-    # NOTE(dalees): We need to set CNI bin_dir to match where Calico and cri-containerd.tar.gz writes (/usr is mounted readonly).
-    sed -i 's#bin_dir = "/usr/libexec/cni/"#bin_dir = "/opt/cni/bin/"#' /etc/containerd/config.toml
-
     $ssh_cmd systemctl daemon-reload
     $ssh_cmd systemctl enable containerd
-    $ssh_cmd systemctl restart containerd
+    $ssh_cmd systemctl start containerd
 else
     # CONTAINER_RUNTIME=host-docker
     $ssh_cmd systemctl disable docker
