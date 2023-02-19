@@ -282,19 +282,6 @@ data:
     check-delay-after-add: 20m
     leader-elect: true
     healthcheck:
-      master:
-        - type: Endpoint
-          params:
-            unhealthy-duration: 3m
-            protocol: HTTPS
-            port: 6443
-            endpoints: ["/healthz"]
-            ok-codes: [200]
-        - type: NodeCondition
-          params:
-            unhealthy-duration: 3m
-            types: ["Ready"]
-            ok-values: ["True"]
       worker:
         - type: NodeCondition
           params:
