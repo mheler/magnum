@@ -29,6 +29,7 @@ if [ "${CONTAINER_RUNTIME}" = "containerd"  ] ; then
         exit 1
     fi
     $ssh_cmd tar xzvf /srv/magnum/cri-containerd.tar.gz -C / --no-same-owner --touch --no-same-permissions
+    $ssh_cmd sed -i 's/LimitNOFILE=infinity/LimitNOFILE=1048576/g' /etc/systemd/system/containerd.service
     $ssh_cmd systemctl daemon-reload
     $ssh_cmd systemctl enable containerd
     $ssh_cmd systemctl start containerd
