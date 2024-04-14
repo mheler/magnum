@@ -470,6 +470,8 @@ class CertManagerTestCase(base.BaseTestCase):
         mock_cluster = mock.MagicMock()
         mock_cluster.ca_cert_ref = None
         mock_cluster.magnum_cert_ref = None
+        mock_cluster.etcd_ca_cert_ref = None
+        mock_cluster.front_proxy_ca_cert_ref = None
 
         cert_manager.delete_certificates_from_cluster(mock_cluster)
         self.assertFalse(mock_delete_cert.called)
