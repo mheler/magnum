@@ -238,7 +238,8 @@ def delete_certificates_from_cluster(cluster, context=None):
 
     :param cluster: The cluster which has certs
     """
-    for cert_ref in ['ca_cert_ref', 'magnum_cert_ref']:
+    for cert_ref in ['ca_cert_ref', 'etcd_ca_cert_ref',
+                     'front_proxy_ca_cert_ref', 'magnum_cert_ref']:
         try:
             cert_ref = getattr(cluster, cert_ref, None)
             if cert_ref:
