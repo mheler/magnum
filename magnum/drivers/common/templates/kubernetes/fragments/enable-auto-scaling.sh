@@ -119,7 +119,7 @@ spec:
     spec:
       hostNetwork: true
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/control-plane: ""
       securityContext:
         runAsUser: 1001
       tolerations:
@@ -132,7 +132,7 @@ spec:
         - key: node.cloudprovider.kubernetes.io/uninitialized
           value: "true"
           effect: NoSchedule
-        - key: node-role.kubernetes.io/master
+        - key: node-role.kubernetes.io/control-plane
           effect: NoSchedule
       serviceAccountName: cluster-autoscaler-account
       containers:
