@@ -13,7 +13,7 @@
 # under the License.
 
 import os
-from urllib import parse as urlparse
+import six.moves.urllib.parse as urlparse
 
 from magnum.common import utils
 import magnum.conf

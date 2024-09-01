@@ -13,6 +13,7 @@
 # under the License.
 
 import abc
+import six
 
 import importlib_metadata as metadata
 from oslo_config import cfg
@@ -28,7 +29,8 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
-class Driver(object, metaclass=abc.ABCMeta):
+@six.add_metaclass(abc.ABCMeta)
+class Driver(object):
 
     definitions = None
     beta = False
