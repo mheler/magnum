@@ -19,6 +19,8 @@ from magnum.common import exception
 import magnum.conf
 from magnum.drivers.common import driver
 from magnum.drivers.heat import template_def as cmn_tdef
+from magnum.drivers.k8s_fedora_atomic_v1 import driver as k8sa_dr
+from magnum.drivers.k8s_fedora_atomic_v1 import template_def as k8sa_tdef
 from magnum.drivers.k8s_fedora_coreos_v1 import driver as k8s_fcos_dr
 from magnum.drivers.k8s_fedora_coreos_v1 import template_def as k8s_fcos_tdef
 from magnum.tests import base
@@ -43,6 +45,17 @@ class TemplateDefinitionTestCase(base.TestCase):
                                                       entry_points):
             self.assertEqual(expected_entry_point, actual_entry_point)
             expected_entry_point.load.assert_called_once()
+
+    @mock.patch('magnum.drivers.common.driver.Driver.get_driver')
+    def test_get_vm_atomic_kubernetes_definition(self, mock_driver):
+        mock_driver.return_value = k8sa_dr.Driver()
+        cluster_driver = driver.Driver.get_driver('vm',
+                                                  'fedora-atomic',
+                                                  'kubernetes')
+        definition = cluster_driver.get_template_definition()
+
+        self.assertIsInstance(definition,
+                              k8sa_tdef.AtomicK8sTemplateDefinition)
 
     @mock.patch('magnum.drivers.common.driver.Driver.get_driver')
     def test_get_vm_fcos_kubernetes_definition(self, mock_driver):
@@ -106,7 +119,7 @@ class TemplateDefinitionTestCase(base.TestCase):
         self.assertIsNone(value)
 
     def test_add_output_with_mapping_type(self):
-        definition = k8s_fcos_dr.Driver().get_template_definition()
+        definition = k8sa_dr.Driver().get_template_definition()
 
         mock_args = [1, 3, 4]
         mock_kwargs = {'cluster_attr': 'test'}
@@ -294,10 +307,10 @@ class BaseK8sTemplateDefinitionTestCase(base.TestCase, metaclass=abc.ABCMeta):
         self.assertEqual(expected_address, actual)
 
 
-class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
+class AtomicK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
 
     def get_definition(self):
-        return k8s_fcos_dr.Driver().get_template_definition()
+        return k8sa_dr.Driver().get_template_definition()
 
     @mock.patch('magnum.common.clients.OpenStackClients')
     @mock.patch('magnum.drivers.heat.template_def.TemplateDefinition'
@@ -312,7 +325,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_scale_manager = mock.MagicMock()
         mock_scale_manager.get_removal_nodes.return_value = removal_nodes
 
-        definition = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        definition = k8sa_tdef.AtomicK8sTemplateDefinition()
 
         scale_params = definition.get_scale_params(mock_context, mock_cluster,
                                                    node_count,
@@ -329,8 +342,8 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
     @mock.patch('magnum.common.neutron.get_fixed_network_name')
     @mock.patch('magnum.common.keystone.is_octavia_enabled')
     @mock.patch('magnum.common.clients.OpenStackClients')
-    @mock.patch('magnum.drivers.k8s_fedora_coreos_v1.template_def'
-                '.FCOSK8sTemplateDefinition.get_discovery_url')
+    @mock.patch('magnum.drivers.k8s_fedora_atomic_v1.template_def'
+                '.AtomicK8sTemplateDefinition.get_discovery_url')
     @mock.patch('magnum.drivers.heat.template_def.BaseTemplateDefinition'
                 '.get_params')
     @mock.patch('magnum.drivers.heat.template_def.TemplateDefinition'
@@ -556,7 +569,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         octavia_lb_healthcheck = mock_cluster.labels.get(
                 'octavia_lb_healthcheck')
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
 
         k8s_def.get_params(mock_context, mock_cluster_template, mock_cluster)
 
@@ -687,7 +700,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
 
         mock_cluster_template.volume_driver = 'cinder'
         mock_cluster.labels = {'cloud_provider_enabled': 'false'}
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         self.assertRaises(
             exception.InvalidParameterValue,
             k8s_def.get_params,
@@ -709,8 +722,8 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
     @mock.patch('magnum.common.neutron.get_external_network_id')
     @mock.patch('magnum.common.keystone.is_octavia_enabled')
     @mock.patch('magnum.common.clients.OpenStackClients')
-    @mock.patch('magnum.drivers.k8s_fedora_coreos_v1.template_def'
-                '.FCOSK8sTemplateDefinition.get_discovery_url')
+    @mock.patch('magnum.drivers.k8s_fedora_atomic_v1.template_def'
+                '.AtomicK8sTemplateDefinition.get_discovery_url')
     @mock.patch('magnum.drivers.heat.template_def.BaseTemplateDefinition'
                 '.get_params')
     @mock.patch('magnum.drivers.heat.template_def.TemplateDefinition'
@@ -755,7 +768,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_osc.cinder_region_name.return_value = 'RegionOne'
         mock_osc_class.return_value = mock_osc
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         k8s_def.get_params(mock_context, mock_cluster_template, mock_cluster)
 
         actual_params = mock_get_params.call_args[1]["extra_params"]
@@ -771,8 +784,8 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
     @mock.patch('magnum.common.neutron.get_subnet')
     @mock.patch('magnum.common.keystone.is_octavia_enabled')
     @mock.patch('magnum.common.clients.OpenStackClients')
-    @mock.patch('magnum.drivers.k8s_fedora_coreos_v1.template_def'
-                '.FCOSK8sTemplateDefinition.get_discovery_url')
+    @mock.patch('magnum.drivers.k8s_fedora_atomic_v1.template_def'
+                '.AtomicK8sTemplateDefinition.get_discovery_url')
     @mock.patch('magnum.drivers.heat.template_def.BaseTemplateDefinition'
                 '.get_params')
     @mock.patch('magnum.drivers.heat.template_def.TemplateDefinition'
@@ -815,7 +828,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_osc.cinder_region_name.return_value = 'RegionOne'
         mock_osc_class.return_value = mock_osc
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
 
         self.assertRaises(
             exception.InvalidParameterValue,
@@ -828,8 +841,8 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
     @mock.patch('magnum.common.neutron.get_subnet')
     @mock.patch('magnum.common.keystone.is_octavia_enabled')
     @mock.patch('magnum.common.clients.OpenStackClients')
-    @mock.patch('magnum.drivers.k8s_fedora_coreos_v1.template_def'
-                '.FCOSK8sTemplateDefinition.get_discovery_url')
+    @mock.patch('magnum.drivers.k8s_fedora_atomic_v1.template_def'
+                '.AtomicK8sTemplateDefinition.get_discovery_url')
     @mock.patch('magnum.drivers.heat.template_def.BaseTemplateDefinition'
                 '.get_params')
     @mock.patch('magnum.drivers.heat.template_def.TemplateDefinition'
@@ -872,7 +885,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_osc.cinder_region_name.return_value = 'RegionOne'
         mock_osc_class.return_value = mock_osc
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         k8s_def.get_params(mock_context, mock_cluster_template, mock_cluster)
 
         actual_params = mock_get_params.call_args[1]["extra_params"]
@@ -1112,7 +1125,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         octavia_lb_healthcheck = mock_cluster.labels.get(
                 'octavia_lb_healthcheck')
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
 
         k8s_def.get_params(mock_context, mock_cluster_template, mock_cluster)
 
@@ -1251,14 +1264,14 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_resp.text = expected_result
         mock_get.return_value = mock_resp
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         k8s_def.validate_discovery_url('http://etcd/test', 1)
 
     @mock.patch('requests.get')
     def test_k8s_validate_discovery_url_fail(self, mock_get):
         mock_get.side_effect = req_exceptions.RequestException()
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         self.assertRaises(exception.GetClusterSizeFailed,
                           k8s_def.validate_discovery_url,
                           'http://etcd/test', 1)
@@ -1269,7 +1282,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_resp.text = str('{"action":"get"}')
         mock_get.return_value = mock_resp
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         self.assertRaises(exception.InvalidClusterDiscoveryURL,
                           k8s_def.validate_discovery_url,
                           'http://etcd/test', 1)
@@ -1282,7 +1295,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_resp.text = expected_result
         mock_get.return_value = mock_resp
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         self.assertRaises(exception.InvalidClusterSize,
                           k8s_def.validate_discovery_url,
                           'http://etcd/test', 5)
@@ -1301,7 +1314,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_cluster.master_count = 10
         mock_cluster.discovery_url = None
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
         discovery_url = k8s_def.get_discovery_url(mock_cluster)
 
         mock_get.assert_called_once_with('http://etcd/test?size=10',
@@ -1319,13 +1332,13 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
         mock_cluster.master_count = 10
         mock_cluster.discovery_url = None
 
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
 
         self.assertRaises(exception.GetDiscoveryUrlFailed,
                           k8s_def.get_discovery_url, mock_cluster)
 
     def test_k8s_get_heat_param(self):
-        k8s_def = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        k8s_def = k8sa_tdef.AtomicK8sTemplateDefinition()
 
         k8s_def.add_nodegroup_params(self.mock_cluster)
         heat_param = k8s_def.get_heat_param(nodegroup_attr='node_count',
@@ -1347,7 +1360,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
 
         self.assertRaises(
             exception.InvalidDiscoveryURL,
-            k8s_fcos_tdef.FCOSK8sTemplateDefinition().get_discovery_url,
+            k8sa_tdef.AtomicK8sTemplateDefinition().get_discovery_url,
             fake_cluster)
 
     def _test_update_outputs_api_address(self, template_definition,
@@ -1381,7 +1394,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
             'port': port,
         }
 
-        template_definition = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        template_definition = k8sa_tdef.AtomicK8sTemplateDefinition()
         self._test_update_outputs_api_address(template_definition, params)
 
     def test_update_k8s_outputs_if_cluster_template_is_secure(self):
@@ -1393,7 +1406,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
             'address': address,
             'port': port,
         }
-        template_definition = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        template_definition = k8sa_tdef.AtomicK8sTemplateDefinition()
         self._test_update_outputs_api_address(template_definition, params,
                                               tls=False)
 
@@ -1426,7 +1439,7 @@ class FCOSK8sTemplateDefinitionTestCase(BaseK8sTemplateDefinitionTestCase):
             'port': port,
         }
 
-        template_definition = k8s_fcos_tdef.FCOSK8sTemplateDefinition()
+        template_definition = k8sa_tdef.AtomicK8sTemplateDefinition()
         self._test_update_outputs_none_api_address(template_definition, params)
 
     def test_update_outputs_master_address(self):

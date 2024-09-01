@@ -16,6 +16,7 @@ from unittest import mock
 from unittest.mock import patch
 
 import magnum.conf
+from magnum.drivers.k8s_fedora_atomic_v1 import driver as k8s_dr
 from magnum.drivers.k8s_fedora_coreos_v1 import driver as k8s_fcos_dr
 from magnum import objects
 from magnum.tests import base
@@ -48,7 +49,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             'volume_driver': 'volume_driver',
             'docker_volume_size': 20,
             'docker_storage_driver': 'devicemapper',
-            'cluster_distro': 'fedora-coreos',
+            'cluster_distro': 'fedora-atomic',
             'coe': 'kubernetes',
             'token': None,
             'http_proxy': 'http_proxy',
@@ -244,7 +245,7 @@ class TestClusterConductorWithK8s(base.TestCase):
         worker_ng = objects.NodeGroup(self.context, **self.worker_ng_dict)
         master_ng = objects.NodeGroup(self.context, **self.master_ng_dict)
         mock_objects_nodegroup_list.return_value = [master_ng, worker_ng]
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
 
         mock_get_subnet.return_value = self.fixed_subnet_cidr
 
@@ -439,7 +440,7 @@ class TestClusterConductorWithK8s(base.TestCase):
         worker_ng = objects.NodeGroup(self.context, **self.worker_ng_dict)
         master_ng = objects.NodeGroup(self.context, **self.master_ng_dict)
         mock_objects_nodegroup_list.return_value = [master_ng, worker_ng]
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
         mock_get_subnet.return_value = self.fixed_subnet_cidr
 
         CONF.set_override('swift_region',
@@ -592,7 +593,7 @@ class TestClusterConductorWithK8s(base.TestCase):
         mock_resp = mock.MagicMock()
         mock_resp.text = expected_result
         mock_get.return_value = mock_resp
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
         cluster = objects.Cluster(self.context, **self.cluster_dict)
         del self.worker_ng_dict['image_id']
         worker_ng = objects.NodeGroup(self.context, **self.worker_ng_dict)
@@ -975,7 +976,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             mock_objects_cluster_template_get_by_uuid,
             mock_get,
             mock_get_subnet):
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
         self._test_extract_template_definition(
             mock_generate_csr_and_key,
             mock_sign_node_certificate,
@@ -1003,7 +1004,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             mock_objects_cluster_template_get_by_uuid,
             mock_get,
             mock_get_subnet):
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
         self._test_extract_template_definition(
             mock_generate_csr_and_key,
             mock_sign_node_certificate,
@@ -1031,7 +1032,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             mock_objects_cluster_template_get_by_uuid,
             mock_get,
             mock_get_subnet):
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
         self._test_extract_template_definition(
             mock_generate_csr_and_key,
             mock_sign_node_certificate,
@@ -1059,7 +1060,7 @@ class TestClusterConductorWithK8s(base.TestCase):
             mock_objects_cluster_template_get_by_uuid,
             mock_get,
             mock_get_subnet):
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
         self._test_extract_template_definition(
             mock_generate_csr_and_key,
             mock_sign_node_certificate,
@@ -1101,7 +1102,7 @@ class TestClusterConductorWithK8s(base.TestCase):
         worker_ng = objects.NodeGroup(self.context, **self.worker_ng_dict)
         master_ng = objects.NodeGroup(self.context, **self.master_ng_dict)
         mock_objects_nodegroup_list.return_value = [master_ng, worker_ng]
-        mock_driver.return_value = k8s_fcos_dr.Driver()
+        mock_driver.return_value = k8s_dr.Driver()
 
         CONF.set_override('etcd_discovery_service_endpoint_format',
                           'http://etcd/test?size=%(size)d',
@@ -1213,7 +1214,7 @@ class TestClusterConductorWithK8s(base.TestCase):
 
     @patch('magnum.common.short_id.generate_id')
     @patch('heatclient.common.template_utils.get_template_contents')
-    @patch('magnum.drivers.k8s_fedora_coreos_v1.driver.Driver.'
+    @patch('magnum.drivers.k8s_fedora_atomic_v1.driver.Driver.'
            '_extract_template_definition')
     @patch('magnum.common.clients.OpenStackClients')
     def test_create_stack(self,
@@ -1238,8 +1239,8 @@ class TestClusterConductorWithK8s(base.TestCase):
         mock_cluster = mock.MagicMock()
         mock_cluster.name = dummy_cluster_name
 
-        k8s_fcos_dr.Driver().create_cluster(self.context, mock_cluster,
-                                            expected_timeout)
+        k8s_dr.Driver().create_cluster(self.context, mock_cluster,
+                                       expected_timeout)
 
         expected_args = {
             'stack_name': expected_stack_name,
@@ -1253,7 +1254,7 @@ class TestClusterConductorWithK8s(base.TestCase):
 
     @patch('magnum.common.short_id.generate_id')
     @patch('heatclient.common.template_utils.get_template_contents')
-    @patch('magnum.drivers.k8s_fedora_coreos_v1.driver.Driver.'
+    @patch('magnum.drivers.k8s_fedora_atomic_v1.driver.Driver.'
            '_extract_template_definition')
     @patch('magnum.common.clients.OpenStackClients')
     def test_create_stack_no_timeout_specified(
@@ -1279,7 +1280,7 @@ class TestClusterConductorWithK8s(base.TestCase):
         mock_cluster = mock.MagicMock()
         mock_cluster.name = dummy_cluster_name
 
-        k8s_fcos_dr.Driver().create_cluster(self.context, mock_cluster, None)
+        k8s_dr.Driver().create_cluster(self.context, mock_cluster, None)
 
         expected_args = {
             'stack_name': expected_stack_name,
@@ -1293,7 +1294,7 @@ class TestClusterConductorWithK8s(base.TestCase):
 
     @patch('magnum.common.short_id.generate_id')
     @patch('heatclient.common.template_utils.get_template_contents')
-    @patch('magnum.drivers.k8s_fedora_coreos_v1.driver.Driver.'
+    @patch('magnum.drivers.k8s_fedora_atomic_v1.driver.Driver.'
            '_extract_template_definition')
     @patch('magnum.common.clients.OpenStackClients')
     def test_create_stack_timeout_is_zero(
@@ -1320,8 +1321,8 @@ class TestClusterConductorWithK8s(base.TestCase):
         mock_cluster = mock.MagicMock()
         mock_cluster.name = dummy_cluster_name
 
-        k8s_fcos_dr.Driver().create_cluster(self.context, mock_cluster,
-                                            cluster_timeout)
+        k8s_dr.Driver().create_cluster(self.context, mock_cluster,
+                                       cluster_timeout)
 
         expected_args = {
             'stack_name': expected_stack_name,
@@ -1334,7 +1335,7 @@ class TestClusterConductorWithK8s(base.TestCase):
         mock_heat_client.stacks.create.assert_called_once_with(**expected_args)
 
     @patch('heatclient.common.template_utils.get_template_contents')
-    @patch('magnum.drivers.k8s_fedora_coreos_v1.driver.Driver.'
+    @patch('magnum.drivers.k8s_fedora_atomic_v1.driver.Driver.'
            '_extract_template_definition')
     @patch('magnum.common.clients.OpenStackClients')
     @patch('magnum.objects.ClusterTemplate.get_by_uuid')
@@ -1363,7 +1364,7 @@ class TestClusterConductorWithK8s(base.TestCase):
         master_ng = objects.NodeGroup(self.context, **self.master_ng_dict)
         mock_objects_nodegroup_list.return_value = [master_ng, worker_ng]
 
-        k8s_fcos_dr.Driver().update_cluster({}, mock_cluster)
+        k8s_dr.Driver().update_cluster({}, mock_cluster)
 
         expected_args = {
             'parameters': {'number_of_minions': 2},
