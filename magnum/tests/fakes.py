@@ -10,10 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import time
 from unittest import mock
-
-from oslo_service import loopingcall
 
 fakeAuthTokenHeaders = {'X-User-Id': u'773a902f022949619b5c2f32cd89d419',
                         'X-Project-Id': u'5588aebbcdc24e17a061595f80574376',
@@ -94,33 +91,3 @@ class FakeAuthProtocol(mock.Mock):
         super(FakeAuthProtocol, self).__init__(**kwargs)
         self.app = FakeApp()
         self.config = ''
-
-
-class FakeLoopingCall(object):
-    """Fake a looping call without the eventlet stuff
-
-       For tests, just do a simple implementation so that we can ensure the
-       called logic works rather than testing LoopingCall
-    """
-
-    def __init__(self, **kwargs):
-        func = kwargs.pop("f", None)
-        if func is None:
-            raise ValueError("Must pass a callable in the -f kwarg.")
-        self.call_func = func
-
-    def start(self, interval, **kwargs):
-        initial_delay = kwargs.pop("initial_delay", 0)
-        stop_on_exception = kwargs.pop("stop_on_exception", True)
-        if initial_delay:
-            time.sleep(initial_delay)
-        while True:
-            try:
-                self.call_func()
-            except loopingcall.LoopingCallDone:
-                return 0
-            except Exception as exc:
-                if stop_on_exception:
-                    raise exc
-            if interval:
-                time.sleep(interval)

@@ -17,8 +17,8 @@
 from oslo_log import log
 from oslo_service import periodic_task
 
+from magnum.common import context
 from magnum import objects
-from magnum.service import periodic
 
 
 LOG = log.getLogger(__name__)
@@ -37,7 +37,6 @@ class MagnumServicePeriodicTasks(periodic_task.PeriodicTasks):
         super(MagnumServicePeriodicTasks, self).__init__(conf)
 
     @periodic_task.periodic_task(run_immediately=True)
-    @periodic.set_context
     def update_magnum_service(self, ctx):
         LOG.debug('Update magnum_service')
         if self.magnum_service_ref is None:
@@ -57,7 +56,8 @@ class MagnumServicePeriodicTasks(periodic_task.PeriodicTasks):
 
 def setup(conf, binary, tg):
     pt = MagnumServicePeriodicTasks(conf, binary)
+    ctx = context.make_admin_context(all_tenants=True)
     tg.add_dynamic_timer(
         pt.run_periodic_tasks,
         periodic_interval_max=conf.periodic_interval_max,
-        context=None)
+        context=ctx)

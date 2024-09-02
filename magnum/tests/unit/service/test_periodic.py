@@ -28,7 +28,6 @@ from magnum.objects.fields import ClusterStatus as cluster_status
 from magnum.service import periodic
 from magnum.tests import base
 from magnum.tests import fake_notifier
-from magnum.tests import fakes
 from magnum.tests.unit.db import utils
 
 
@@ -191,33 +190,29 @@ class PeriodicTestCase(base.TestCase):
             _mock_update_status)
 
     @mock.patch('magnum.drivers.common.driver.Driver.get_driver_for_cluster')
-    def test_update_status_non_trusts_error(self, mock_get_driver):
+    @mock.patch('magnum.objects.Cluster.list')
+    def test_update_status_non_trusts_error(self, mock_cluster_list,
+                                            mock_get_driver):
+        mock_cluster_list.return_value = [self.cluster1]
         mock_get_driver.return_value = self.mock_driver
         trust_ex = ("Unknown Keystone error")
         self.mock_driver.update_cluster_status.side_effect = \
             exception.AuthorizationFailure(client='keystone', message=trust_ex)
-        self.assertRaises(
-            exception.AuthorizationFailure,
-            periodic.ClusterUpdateJob(
-                self.context, self.cluster1).update_status
-        )
+        periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(self.context)
         self.assertEqual(1, self.mock_driver.update_cluster_status.call_count)
 
     @mock.patch('magnum.drivers.common.driver.Driver.get_driver_for_cluster')
-    def test_update_status_trusts_not_found(self, mock_get_driver):
+    @mock.patch('magnum.objects.Cluster.list')
+    def test_update_status_trusts_not_found(self, mock_cluster_list,
+                                            mock_get_driver):
+        mock_cluster_list.return_value = [self.cluster1]
         mock_get_driver.return_value = self.mock_driver
         trust_ex = ("Could not find trust: %s" % self.cluster1.trust_id)
         self.mock_driver.update_cluster_status.side_effect = \
             exception.AuthorizationFailure(client='keystone', message=trust_ex)
-        self.assertRaises(
-            exception.AuthorizationFailure,
-            periodic.ClusterUpdateJob(
-                self.context, self.cluster1).update_status
-        )
+        periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(self.context)
         self.assertEqual(2, self.mock_driver.update_cluster_status.call_count)
 
-    @mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
-                new=fakes.FakeLoopingCall)
     @mock.patch('magnum.drivers.common.driver.Driver.get_driver_for_cluster')
     @mock.patch('magnum.objects.Cluster.list')
     @mock.patch.object(dbapi.Connection, 'destroy_nodegroup')
@@ -234,7 +229,8 @@ class PeriodicTestCase(base.TestCase):
 
         with mock.patch.object(dbapi.Connection, 'list_cluster_nodegroups',
                                mock_nodegroup_list):
-            periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(None)
+            periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(
+                self.context)
 
             self.assertEqual(cluster_status.CREATE_COMPLETE,
                              self.cluster1.status)
@@ -254,8 +250,6 @@ class PeriodicTestCase(base.TestCase):
             notifications = fake_notifier.NOTIFICATIONS
             self.assertEqual(4, len(notifications))
 
-    @mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
-                new=fakes.FakeLoopingCall)
     @mock.patch('magnum.drivers.common.driver.Driver.get_driver_for_cluster')
     @mock.patch('magnum.objects.Cluster.list')
     def test_sync_cluster_status_not_changes(self, mock_cluster_list,
@@ -269,7 +263,7 @@ class PeriodicTestCase(base.TestCase):
                                           self.cluster3, self.cluster5]
         mock_get_driver.return_value = self.mock_driver
 
-        periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(None)
+        periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(self.context)
 
         self.assertEqual(cluster_status.CREATE_IN_PROGRESS,
                          self.cluster1.status)
@@ -286,8 +280,6 @@ class PeriodicTestCase(base.TestCase):
         notifications = fake_notifier.NOTIFICATIONS
         self.assertEqual(0, len(notifications))
 
-    @mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
-                new=fakes.FakeLoopingCall)
     @mock.patch('magnum.drivers.common.driver.Driver.get_driver_for_cluster')
     @mock.patch('magnum.objects.Cluster.list')
     @mock.patch.object(dbapi.Connection, 'destroy_cluster')
@@ -304,7 +296,8 @@ class PeriodicTestCase(base.TestCase):
 
         with mock.patch.object(dbapi.Connection, 'list_cluster_nodegroups',
                                mock_nodegroup_list):
-            periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(None)
+            periodic.MagnumPeriodicTasks(CONF).sync_cluster_status(
+                self.context)
 
             self.assertEqual(cluster_status.CREATE_FAILED,
                              self.cluster1.status)
@@ -323,8 +316,6 @@ class PeriodicTestCase(base.TestCase):
             notifications = fake_notifier.NOTIFICATIONS
             self.assertEqual(5, len(notifications))
 
-    @mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
-                new=fakes.FakeLoopingCall)
     @mock.patch('magnum.conductor.monitors.create_monitor')
     @mock.patch('magnum.objects.Cluster.list')
     @mock.patch('magnum.common.rpc.get_notifier')
@@ -337,6 +328,7 @@ class PeriodicTestCase(base.TestCase):
         notifier = mock.MagicMock()
         mock_get_notifier.return_value = notifier
         mock_cluster_list.return_value = [self.cluster4]
+        self.cluster4.save = mock.MagicMock()
         self.cluster4.status = cluster_status.CREATE_COMPLETE
         health = {'health_status': cluster_health_status.UNHEALTHY,
                   'health_status_reason': {'api': 'ok', 'node-0.Ready': False}}
@@ -350,3 +342,4 @@ class PeriodicTestCase(base.TestCase):
                          self.cluster4.health_status)
         self.assertEqual({'api': 'ok', 'node-0.Ready': 'False'},
                          self.cluster4.health_status_reason)
+        self.cluster4.save.assert_called_once_with()
