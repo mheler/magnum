@@ -93,8 +93,7 @@ class MagnumBase(models.TimestampMixin,
         if session is None:
             session = db_api.get_session()
 
-        with session.begin():
-            super(MagnumBase, self).save(session)
+        super(MagnumBase, self).save(session)
 
 
 Base = declarative_base(cls=MagnumBase)
